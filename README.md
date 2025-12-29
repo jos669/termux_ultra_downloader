@@ -1,89 +1,93 @@
-# Termux Ultra Downloader
+# Termux Ultra Downloader (TUD)
 
-Herramienta profesional todo-en-uno para Termux, capaz de descargar video y audio, convertir formatos, organizar archivos y ejecutarse tanto por una interfaz interactiva como por línea de comandos (CLI).
+**Herramienta profesional todo-en-uno para Termux, diseñada para descargar, convertir y gestionar contenido multimedia de forma eficiente.**
 
-## 1. Requisitos Previos
-- Tener Termux instalado desde F-Droid (recomendado).
-- Acceso al almacenamiento compartido. Ejecuta `termux-setup-storage` en la consola de Termux y acepta el permiso.
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Platform-Android%20(Termux)-brightgreen.svg)](https://termux.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 2. Instrucciones de Instalación
+> TUD te permite descargar videos y audios, convertir formatos, organizar archivos automáticamente y usar la aplicación tanto desde una interfaz interactiva como por línea de comandos (CLI) para máxima flexibilidad.
 
-**¡Importante!** Ejecuta el script `install.sh` para la configuración automática:
+---
+
+## 🚀 Características Principales
+
+- **Descarga Multi-Plataforma**: Soporte para descargar contenido de cientos de sitios web gracias a `yt-dlp`.
+- **Conversión de Formatos**: Convierte videos a diferentes formatos o extrae el audio en MP3, FLAC, y más, usando `ffmpeg`.
+- **Modo Interactivo**: Un menú guiado fácil de usar, perfecto para principiantes.
+- **Potente CLI**: Control total a través de la línea de comandos para usuarios avanzados y automatización.
+- **Organización Automática**: Los archivos se guardan en una estructura de carpetas lógica por plataforma y tipo de medio.
+- **Descarga por Lotes**: Procesa una lista de URLs desde un archivo de texto.
+- **Optimizado para Android**: Incluye consejos para evitar que Termux se cierre durante descargas largas.
+
+---
+
+## 🛠️ Instalación y Uso
+
+Sigue estos pasos para poner en marcha Termux Ultra Downloader en tu dispositivo.
+
+### 1. Requisitos Previos
+- **Termux**: Instalado desde [F-Droid](https://f-droid.org/packages/com.termux/) (recomendado).
+- **Permisos de Almacenamiento**: Ejecuta `termux-setup-storage` en Termux y acepta los permisos.
+
+### 2. Descarga del Proyecto
+Para obtener el código fuente, clona este repositorio usando `git`:
 
 ```bash
-cd termux_ultra_downloader  # Navega al directorio raíz del proyecto
+git clone https://github.com/jos669/termux_ultra_downloader.git
+cd termux_ultra_downloader
+```
+
+### 3. Instalación Automática
+El proyecto incluye un script de instalación que configura todo por ti.
+
+```bash
 bash scripts/install.sh
 ```
+> **Nota**: El instalador detectará e instalará las dependencias necesarias (`python`, `ffmpeg`, `yt-dlp`) y creará un comando global `tud` para que puedas ejecutar la aplicación desde cualquier directorio.
 
-El instalador te guiará para:
-- Detectar e instalar dependencias (python, ffmpeg, yt-dlp).
-- Solicitar permisos de almacenamiento.
-- Crear el comando global `tud` para ejecutar la aplicación fácilmente desde cualquier lugar.
+### 4. Ejecución
+Una vez instalado, puedes iniciar la aplicación de dos maneras:
 
-## 3. Ejecución
+- **Modo Interactivo (Recomendado)**:
+  ```bash
+  tud
+  ```
+- **Modo CLI (Avanzado)**:
+  Usa `tud --help` para ver todos los comandos y opciones disponibles.
 
-### Modo Interactivo (Recomendado para principiantes)
-Para iniciar el menú guiado, simplemente ejecuta:
+---
+
+## 💡 Ejemplos de Uso (CLI)
+
 ```bash
-tud
-```
-o si no instalaste el comando global:
-```bash
-python main.py
-```
-
-### Modo CLI (Línea de Comandos)
-Para uso avanzado y automatización.
-Una vez instalado el comando global `tud`, la sintaxis es:
-`tud [comando] [argumentos...]`
-
-**Usa `tud --help` o `tud [comando] --help` para ver todas las opciones.**
-
-**Ejemplos Reales:**
-```bash
-# Verificar e instalar dependencias si es necesario
-tud setup
-
-# Mostrar la configuración actual
-tud config show
-
-# Cambiar la ruta de descarga predeterminada
-tud config set DOWNLOADS_BASE_DIR /sdcard/MisDescargasTUD/
-
-# Descargar un video en calidad 1080p
-tud video 1080p https://www.youtube.com/watch?v=dQw4w9WgXcQ
-
 # Descargar un video en la mejor calidad posible a una ruta específica
-tud video best https://... --route /sdcard/Movies/
+tud video best "https://youtu.be/dQw4w9WgXcQ" --route /sdcard/Movies/
 
-# Extraer audio en MP3 a 320k y guardar la ruta como nueva predeterminada
-tud audio mp3 320 https://... --route /sdcard/Music/MyBand/ --save-route
+# Extraer audio en MP3 a 320kbps
+tud audio mp3 320 "https://youtu.be/dQw4w9WgXcQ"
 
 # Descargar una playlist completa de videos en 720p
-tud playlist video 720 https://...
-
-# Extraer el audio de una playlist en formato FLAC, mostrando más detalles
-tud playlist audio flac best https://... --verbose
+tud playlist video 720 "https://www.youtube.com/playlist?list=PL..."
 
 # Descargar videos masivamente desde un archivo de texto (links.txt)
 tud batch video best links.txt
-
-# Monitorear un archivo 'nuevas_urls.txt' y descargar automáticamente las URLs añadidas
-tud watch nuevas_urls.txt
-
-# Mostrar el comando yt-dlp que se ejecutaría para una descarga de audio sin ejecutarla
-tud audio mp3 320 https://... --dry-run
 ```
 
-## 4. Organización de Archivos
-- Todos los archivos se guardan en la carpeta `TermuxDownloader` en tu almacenamiento compartido (visible para otras apps). Esta ruta se puede configurar.
-- Dentro, se crean carpetas por plataforma (YouTube, TikTok, etc.).
-- Dentro de cada plataforma, hay subcarpetas `video` y `audio`.
-- Los archivos se nombran con `FECHA_Titulo.extension` para fácil organización.
+---
 
-## 5. Tips de Optimización para Android
-- **Evitar que Termux se cierre**: Para descargas largas, usa el comando `termux-wake-lock` en una nueva sesión de Termux antes de iniciar el script. Para detenerlo, usa `termux-wake-unlock`.
-- **Uso de la batería**: Las descargas y conversiones consumen mucha batería. Conecta el dispositivo a la corriente para procesos largos.
-- **Almacenamiento**: Verifica tener suficiente espacio. Los archivos se guardan en el almacenamiento compartido, facilitando su gestión.
-- **Errores de Red**: Si una descarga falla por problemas de red, el script intentará continuarla en la siguiente ejecución gracias a la opción `--continue` de `yt-dlp`.
-- **Log de Errores**: Si algo sale mal, revisa el archivo `downloader.log` dentro de la carpeta `TermuxDownloader/logs/` para obtener pistas sobre el problema.
+## 📱 Optimización para Android
+
+- **Evitar que Termux se cierre**: Para descargas largas, ejecuta `termux-wake-lock` en una nueva sesión de Termux antes de iniciar el script.
+- **Uso de la batería**: Conecta tu dispositivo a la corriente para procesos largos, ya que la descarga y conversión consumen mucha batería.
+- **Log de Errores**: Si algo sale mal, revisa el archivo `downloader.log` dentro de `TermuxDownloader/logs/` para obtener más detalles.
+
+---
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Si tienes ideas para mejorar el proyecto, por favor abre un *issue* o envía un *pull request*.
+
+## 📜 Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
