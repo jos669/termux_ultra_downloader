@@ -1,15 +1,22 @@
 import os
-import re
 import shutil
 import sys
 
-from config import settings
+from config import config_manager
 
 from .colors import Colors
 
 
 def get_user_input(prompt):
-    """Obtiene una entrada del usuario y maneja la salida del programa."""
+    """
+    Obtiene una entrada del usuario y maneja la salida del programa.
+
+    Args:
+        prompt (str): Mensaje a mostrar al usuario
+
+    Returns:
+        str: Entrada del usuario o sale del programa si se cancela
+    """
     try:
         return input(prompt)
     except (KeyboardInterrupt, EOFError):
@@ -18,7 +25,15 @@ def get_user_input(prompt):
 
 
 def create_directories(path):
-    """Crea las carpetas de destino si no existen."""
+    """
+    Crea las carpetas de destino si no existen.
+
+    Args:
+        path (str): Ruta del directorio a crear
+
+    Returns:
+        bool: True si se creó exitosamente, False en caso contrario
+    """
     try:
         os.makedirs(path, exist_ok=True)
         return True
@@ -30,7 +45,16 @@ def create_directories(path):
 
 
 def move_file(source_path, dest_path):
-    """Mueve un archivo de forma segura."""
+    """
+    Mueve un archivo de forma segura.
+
+    Args:
+        source_path (str): Ruta del archivo de origen
+        dest_path (str): Ruta del archivo de destino
+
+    Returns:
+        str or None: Ruta de destino si se movió exitosamente, origen si falló
+    """
     if not os.path.exists(source_path):
         print(
             f"{Colors.RED}Error: El archivo de origen '{source_path}' no "
@@ -52,33 +76,29 @@ def move_file(source_path, dest_path):
 
 
 def save_default_path(new_path):
-    """Guarda la nueva ruta predeterminada en config/settings.py."""
-    settings_file = os.path.join(
-        os.path.dirname(__file__), "..", "config", "settings.py"
-    )
+    """
+    Guarda la nueva ruta predeterminada usando el sistema de configuración.
+
+    Args:
+        new_path (str): Nueva ruta predeterminada a guardar
+
+    Returns:
+        bool: True si se guardó exitosamente, False en caso contrario
+    """
     try:
-        with open(settings_file, encoding="utf-8") as f:
-            content = f.read()
-
-        # Usamos regex para reemplazar la línea de forma segura
-        # Asegurarse de que la ruta se guarde como string raw
-        new_content = re.sub(
-            r"DOWNLOADS_BASE_DIR\s*=\s*.+",
-            f"DOWNLOADS_BASE_DIR = r'{new_path}'",
-            content,
-        )
-
-        with open(settings_file, "w", encoding="utf-8") as f:
-            f.write(new_content)
-
-        print(
-            f"{Colors.GREEN}Nueva ruta predeterminada guardada: {new_path}"
-            f"{Colors.RESET}"
-        )
-        # Actualizar la variable en la sesión actual para que los
-        # siguientes usos la reflejen
-        settings.DOWNLOADS_BASE_DIR = new_path
-        return True
+        success = config_manager.set_default_path(new_path)
+        if success:
+            print(
+                f"{Colors.GREEN}Nueva ruta predeterminada guardada: {new_path}"
+                f"{Colors.RESET}"
+            )
+            return True
+        else:
+            print(
+                f"{Colors.RED}Error al guardar la nueva ruta predeterminada."
+                f"{Colors.RESET}"
+            )
+            return False
     except Exception as e:
         print(
             f"{Colors.RED}Error al guardar la nueva ruta predeterminada: "

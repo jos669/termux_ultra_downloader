@@ -19,16 +19,40 @@ def download_audio(
     cookies_file,
     dry_run=False,
 ):
-    """Función para descargar audio desde YouTube."""
+    """
+    Función para descargar audio desde YouTube.
 
+    Args:
+        url (str): URL del video de donde extraer el audio
+        output_path (str): Ruta de salida para el archivo descargado
+        format (str): Formato de audio (mp3, wav, etc.)
+        bitrate (str): Calidad de audio (best, 0, 1, etc.)
+        is_playlist (bool): Indica si la URL es una playlist
+        verbose (bool): Mostrar información detallada
+        cookies_file (str): Ruta al archivo de cookies
+        dry_run (bool): Modo de prueba sin descargar realmente
+
+    Returns:
+        bool: True si la descarga fue exitosa, False en caso contrario
+    """
     platform = get_platform_name(url)
+
+    # Security validation: Check if output_path is safe to prevent directory traversal
+    from .downloader import is_safe_path
+    if not is_safe_path(os.path.expanduser("~"), output_path):
+        print(f"{Colors.RED}ERROR: Ruta de salida insegura: {output_path}{Colors.RESET}")
+        print(f"{Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{Colors.RESET}")
+        return False
 
     if output_path == "/storage/emulated/0/Download" or output_path == "/data/data/com.termux/files/home/downloads":
         base_output_dir = output_path
     else:
         base_output_dir = os.path.join(output_path, platform, "audio")
 
-    create_directories(base_output_dir)
+    # Validate and create directories safely
+    if not create_directories(base_output_dir):
+        print(f"{Colors.RED}ERROR: No se pudieron crear los directorios: {base_output_dir}{Colors.RESET}")
+        return False
 
     # Construcción de argumentos de yt-dlp para audio
     output_template = os.path.join(base_output_dir, "%(title)s.%(ext)s")

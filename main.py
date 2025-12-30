@@ -4,6 +4,7 @@ import sys
 import time  # Import the time module
 
 from config import user_settings
+from config.config_manager import get_default_path
 # Importa el nuevo módulo downloader
 from core import audio, batch, playlist, downloader
 from ui import tui  # Importa el módulo tui completo
@@ -20,13 +21,37 @@ def get_output_path_from_user():
     Muestra la ruta de descarga predeterminada y pregunta al usuario si desea
     usarla o introducir una nueva.
     """
-    default_path = user_settings.get_default_path()
+    default_path = get_default_path()
     print(f"La ruta de descarga predeterminada es: {default_path}")
     choice = input("¿Usar esta ruta? (s/n): ").lower()
     if choice == "s":
         return default_path
     else:
-        new_path = input("Introduce la nueva ruta de descarga: ")
+        new_path = input("Introduce la nueva ruta de descarga: ").strip()
+
+        # Input validation
+        if not new_path:
+            print("Ruta vacía. Usando la predeterminada.")
+            return default_path
+
+        # Check for path traversal attempts
+        if '..' in new_path or new_path.startswith('../') or '/..' in new_path:
+            print("Ruta inválida: intento de navegación de directorios detectado. Usando la predeterminada.")
+            return default_path
+
+        # Normalize the path
+        new_path = os.path.normpath(new_path)
+
+        # Expand user home if needed
+        if new_path.startswith('~'):
+            new_path = os.path.expanduser(new_path)
+
+        # Validate that the path is within safe boundaries
+        from core.downloader import is_safe_path
+        if not is_safe_path(os.path.expanduser("~"), new_path):
+            print("Ruta inválida: fuera de los límites seguros. Usando la predeterminada.")
+            return default_path
+
         if os.path.isdir(new_path):
             return new_path
         else:
@@ -193,11 +218,44 @@ def interactive_mode():
 def main():
     parser = argparse.ArgumentParser(description="Termux Ultra Downloader (TUD)")
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("setup", help="Verifica dependencias e " "instala carpetas.")
+
+    # Setup command
+    setup_parser = subparsers.add_parser("setup", help="Verifica dependencias e " "instala carpetas.")
+
+    # Video command
+    video_parser = subparsers.add_parser("video", help="Descargar videos")
+    video_parser.add_argument("quality", choices=["best", "1080p", "720p", "480p"], help="Calidad del video")
+    video_parser.add_argument("url", help="URL del video")
+    video_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
+    video_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+
+    # Audio command
+    audio_parser = subparsers.add_parser("audio", help="Descargar audio")
+    audio_parser.add_argument("format", choices=["mp3", "m4a", "flac", "wav"], help="Formato de audio")
+    audio_parser.add_argument("bitrate", choices=["best", "320", "192", "128"], help="Bitrate del audio")
+    audio_parser.add_argument("url", help="URL del video/audio")
+    audio_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
+    audio_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+
+    # Playlist command
+    playlist_parser = subparsers.add_parser("playlist", help="Descargar playlist")
+    playlist_parser.add_argument("media_type", choices=["video", "audio"], help="Tipo de media")
+    playlist_parser.add_argument("quality", help="Calidad del video o formato del audio")
+    playlist_parser.add_argument("url", help="URL de la playlist")
+    playlist_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
+    playlist_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+
+    # Batch command
+    batch_parser = subparsers.add_parser("batch", help="Descarga masiva desde archivo")
+    batch_parser.add_argument("media_type", choices=["video", "audio"], help="Tipo de media")
+    batch_parser.add_argument("config_option", help="Calidad de video o formato de audio")
+    batch_parser.add_argument("file_path", help="Ruta al archivo con URLs")
+    batch_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
+    batch_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
 
     if len(sys.argv) == 1:
         check_dependencies()
-        create_directories(user_settings.get_default_path())
+        create_directories(get_default_path())
         interactive_mode()
         return
 
@@ -206,8 +264,68 @@ def main():
     if args.command == "setup":
         print("Ejecutando setup...")
         check_dependencies()
-        create_directories(user_settings.get_default_path())
+        create_directories(get_default_path())
         print("¡Setup completado exitosamente!")
+    elif args.command == "video":
+        print(f"Descargando video desde: {args.url}")
+        result = downloader.download_and_merge_video_audio(
+            args.url,
+            output_path=args.output_path,
+            verbose=True,
+            cookies_file=args.cookies_file
+        )
+        if result:
+            print(f"✅ Video descargado exitosamente: {result}")
+        else:
+            print("❌ Falló la descarga del video")
+    elif args.command == "audio":
+        print(f"Descargando audio desde: {args.url}")
+        success = audio.download_audio(
+            args.url,
+            output_path=args.output_path,
+            format=args.format,
+            bitrate="best" if args.bitrate == "best" else args.bitrate + "K",
+            is_playlist=False,
+            verbose=True,
+            cookies_file=args.cookies_file
+        )
+        if success:
+            print("✅ Audio descargado exitosamente")
+        else:
+            print("❌ Falló la descarga del audio")
+    elif args.command == "playlist":
+        print(f"Descargando playlist desde: {args.url}")
+        if args.media_type == "video":
+            playlist.download_playlist_video(
+                args.url,
+                quality=args.quality,
+                output_path=args.output_path,
+                verbose=True,
+                cookies_file=args.cookies_file
+            )
+        else:  # audio
+            playlist.download_playlist_audio(
+                args.url,
+                format=args.quality,  # For audio, quality parameter is the format
+                bitrate="best",
+                output_path=args.output_path,
+                verbose=True,
+                cookies_file=args.cookies_file
+            )
+        print("✅ Playlist descargada exitosamente")
+    elif args.command == "batch":
+        print(f"Descargando en batch desde archivo: {args.file_path}")
+        batch.process_batch_download(
+            args.file_path,
+            output_path=args.output_path,
+            media_type=args.media_type,
+            config_option=args.config_option,
+            verbose=True,
+            cookies_file=args.cookies_file
+        )
+        print("✅ Descarga batch completada")
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":

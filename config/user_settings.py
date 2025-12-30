@@ -1,7 +1,7 @@
 import json
 import os
 
-from config.settings import DOWNLOADS_BASE_DIR
+from .config_manager import get_default_path as get_config_default_path, set_default_path as set_config_default_path
 
 USER_SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "user_settings.json")
 
@@ -22,13 +22,14 @@ def save_user_settings(settings):
 
 def get_default_path():
     """Obtiene la ruta de descarga predeterminada del usuario."""
-    settings = load_user_settings()
-    return settings.get("default_download_path", DOWNLOADS_BASE_DIR)
+    # Use the new config manager instead of the old settings
+    return get_config_default_path()
 
 
 def set_default_path(new_path):
     """Establece una nueva ruta de descarga predeterminada."""
-    settings = load_user_settings()
-    settings["default_download_path"] = new_path
-    save_user_settings(settings)
-    print(f"Nueva ruta de descarga predeterminada establecida: {new_path}")
+    # Use the new config manager instead of the old settings
+    success = set_config_default_path(new_path)
+    if success:
+        print(f"Nueva ruta de descarga predeterminada establecida: {new_path}")
+    return success

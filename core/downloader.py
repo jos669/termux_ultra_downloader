@@ -7,13 +7,52 @@ from urllib.parse import urlparse
 from utils.colors import Colors
 from utils.logger import log_message
 
+
+def is_safe_path(base_path, target_path):
+    """
+    Validates that the target path is within the base path to prevent directory traversal.
+
+    Args:
+        base_path (str): The allowed base directory
+        target_path (str): The target path to validate
+
+    Returns:
+        bool: True if the path is safe, False otherwise
+    """
+    # Normalize both paths
+    base_path = os.path.normpath(base_path)
+    target_path = os.path.normpath(target_path)
+
+    # Get the real paths to resolve any symbolic links
+    try:
+        base_real = os.path.realpath(base_path)
+        target_real = os.path.realpath(target_path)
+    except (OSError, ValueError):
+        return False
+
+    # Check if target path is within base path
+    try:
+        os.path.commonpath([base_real, target_real])
+        return target_real.startswith(base_real + os.sep) or target_real == base_real
+    except ValueError:
+        # Paths are on different drives (on Windows) or other error
+        return False
+
 # --- Rutas de binarios (gestionadas con shutil.which para robustez en Termux) ---
 YT_DLP_PATH = shutil.which("yt-dlp")
 FFMPEG_PATH = shutil.which("ffmpeg")  # yt-dlp lo necesitará para la fusión
 
 
 def get_video_filename(url: str) -> str:
-    """Genera un nombre de archivo base seguro para la URL."""
+    """
+    Genera un nombre de archivo base seguro para la URL.
+
+    Args:
+        url (str): La URL del video para generar el nombre de archivo
+
+    Returns:
+        str: Un nombre de archivo seguro basado en la URL
+    """
     # Simplifica el nombre del archivo para evitar caracteres especiales
     parsed_url = urlparse(url)
     if "youtube.com" in parsed_url.hostname or "youtu.be" in parsed_url.hostname:
@@ -45,6 +84,12 @@ def download_and_merge_video_audio(
         return None
     if not FFMPEG_PATH:
         print(f"{Colors.RED}ERROR: 'ffmpeg' no encontrado. yt-dlp lo necesita para fusionar video/audio.{Colors.RESET}")
+        return None
+
+    # Security validation: Check if output_path is safe to prevent directory traversal
+    if not is_safe_path(os.path.expanduser("~"), output_path):
+        print(f"{Colors.RED}ERROR: Ruta de salida insegura: {output_path}{Colors.RESET}")
+        print(f"{Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{Colors.RESET}")
         return None
 
     if not os.access(os.path.dirname(output_path) or output_path, os.W_OK):
@@ -124,6 +169,22 @@ def run_yt_dlp(
     Ejecuta un comando de yt-dlp y captura su salida.
     Retorna el objeto CompletedProcess.
     Eleva subprocess.CalledProcessError si el comando falla (check=True).
+
+    Args:
+        args (list): Lista de argumentos para yt-dlp
+        url (str): URL del video a descargar
+        platform (str): Nombre de la plataforma
+        verbose (bool): Mostrar información detallada
+        cookies_file (str): Ruta al archivo de cookies
+        dry_run (bool): Modo de prueba sin ejecutar realmente
+
+    Returns:
+        subprocess.CompletedProcess: Resultado de la ejecución del proceso
+
+    Raises:
+        subprocess.CalledProcessError: Si yt-dlp falla
+        FileNotFoundError: Si yt-dlp no se encuentra
+        Exception: Para otros errores inesperados
     """
     command = ["yt-dlp"] + args
     if cookies_file:

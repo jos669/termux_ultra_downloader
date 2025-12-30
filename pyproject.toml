@@ -1,3 +1,23 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "termux-ultra-downloader"
+version = "3.5.2"
+description = "Professional all-in-one tool for Termux to download, convert, and manage multimedia content"
+authors = [{name = "jos669", email = "jos669@example.com"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "yt-dlp",
+    "colorama",
+    "requests",
+]
+
+[project.scripts]
+tud = "main:main"
+
 [tool.black]
 line-length = 88
 target-version = ['py38']
@@ -16,3 +36,7 @@ ignore_missing_imports = true
 [tool.pylint.messages_control]
 max-line-length = 88
 disable = ["C0111", "C0103"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]

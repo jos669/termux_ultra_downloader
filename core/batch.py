@@ -1,4 +1,4 @@
-from config.settings import AUDIO_FORMAT_MAP, VIDEO_QUALITY_MAP
+from config.settings import get_audio_format_map, get_video_quality_map
 from core.audio import download_audio
 from core.video import download_video
 from utils.colors import Colors
@@ -46,21 +46,24 @@ def process_batch_download(
     )
 
     # Validar opciones de configuración para batch
+    video_quality_map = get_video_quality_map()
+    audio_format_map = get_audio_format_map()
+
     if media_type == "video":
-        if config_option not in VIDEO_QUALITY_MAP:
+        if config_option not in video_quality_map:
             print(
                 f"{Colors.RED}Error: Calidad de video '{config_option}' no "
                 f"válida para batch. Opciones: "
-                f"{list(VIDEO_QUALITY_MAP.keys())}{Colors.RESET}"
+                f"{list(video_quality_map.keys())}{Colors.RESET}"
             )
             return
     elif media_type == "audio":
         # Asumiendo que config_option es el formato para audio
-        if config_option not in AUDIO_FORMAT_MAP:
+        if config_option not in audio_format_map:
             print(
                 f"{Colors.RED}Error: Formato de audio '{config_option}' no "
                 f"válido para batch. Opciones: "
-                f"{list(AUDIO_FORMAT_MAP.keys())}{Colors.RESET}"
+                f"{list(audio_format_map.keys())}{Colors.RESET}"
             )
             return
 

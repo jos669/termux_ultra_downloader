@@ -7,6 +7,7 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_root)
 
 from config import user_settings
+from config.config_manager import get_default_path
 from utils.colors import Colors
 
 
@@ -17,7 +18,7 @@ def main():
     home_dir = os.path.expanduser('~')
     new_safe_path = os.path.join(home_dir, 'Termux_Downloads')
 
-    print(f"Ruta de descarga anterior: {user_settings.get_default_path()}")
+    print(f"Ruta de descarga anterior: {get_default_path()}")
     print(f"Nueva ruta de descarga segura a establecer: {new_safe_path}")
 
     # 2. Crea el directorio si no existe

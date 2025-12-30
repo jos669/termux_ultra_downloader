@@ -5,7 +5,11 @@ from .colors import Colors
 
 
 def check_dependencies():
-    """Verifica si yt-dlp y ffmpeg están instalados."""
+    """
+    Verifica si yt-dlp y ffmpeg están instalados.
+
+    Exits the program if dependencies are missing.
+    """
     print(f"{Colors.CYAN}[*] Verificando dependencias...{Colors.RESET}")
     missing = []
     try:
@@ -38,7 +42,12 @@ def check_dependencies():
 
 
 def update_yt_dlp():
-    """Intenta actualizar yt-dlp usando pip."""
+    """
+    Intenta actualizar yt-dlp usando pip.
+
+    Returns:
+        None
+    """
     print(f"{Colors.CYAN}[*] Intentando actualizar yt-dlp...{Colors.RESET}")
     try:
         subprocess.run(
@@ -50,7 +59,15 @@ def update_yt_dlp():
 
 
 def is_valid_url(url):
-    """Una validación muy básica de URL."""
+    """
+    Una validación muy básica de URL.
+
+    Args:
+        url (str): URL a validar
+
+    Returns:
+        bool: True si la URL es válida, False en caso contrario
+    """
     if not url or not isinstance(url, str):
         return False
     return url.startswith("http://") or url.startswith("https://")

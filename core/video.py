@@ -1,6 +1,7 @@
 import glob  # Para buscar archivos por patrón
 import os
 import subprocess
+import time
 
 from utils.colors import Colors
 from utils.logger import log_message
@@ -9,6 +10,29 @@ from utils.path_manager import create_directories
 from . import ffmpeg_utils  # Importar el nuevo módulo de utilidades de ffmpeg
 from .downloader import run_yt_dlp
 from .platforms import get_platform_name
+
+
+def wait_for_file_creation(file_path, timeout=10):
+    """
+    Wait for a file to be fully created and written to disk.
+
+    Args:
+        file_path (str): Path to the file to wait for
+        timeout (int): Maximum time to wait in seconds
+
+    Returns:
+        bool: True if file exists and is stable, False otherwise
+    """
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if os.path.exists(file_path):
+            # Check if file size is stable (not changing)
+            initial_size = os.path.getsize(file_path)
+            time.sleep(0.5)  # Wait a bit
+            if os.path.exists(file_path) and os.path.getsize(file_path) == initial_size:
+                return True
+        time.sleep(0.5)
+    return False
 
 
 def download_video(
@@ -20,17 +44,41 @@ def download_video(
     cookies_file,
     dry_run=False,
 ):
-    """Función para descargar video desde YouTube con manejo de fusión de audio/video."""
+    """
+    Función para descargar video desde YouTube con manejo de fusión de audio/video.
+
+    Args:
+        url (str): URL del video a descargar
+        quality (str): Calidad del video (480p, 720p, 1080p, best)
+        output_path (str): Ruta de salida para el archivo descargado
+        is_playlist (bool): Indica si la URL es una playlist
+        verbose (bool): Mostrar información detallada
+        cookies_file (str): Ruta al archivo de cookies
+        dry_run (bool): Modo de prueba sin descargar realmente
+
+    Returns:
+        bool: True si la descarga fue exitosa, False en caso contrario
+    """
 
     platform = get_platform_name(url)
     is_short = "/shorts/" in url
+
+    # Security validation: Check if output_path is safe to prevent directory traversal
+    from .downloader import is_safe_path
+    if not is_safe_path(os.path.expanduser("~"), output_path):
+        print(f"{Colors.RED}ERROR: Ruta de salida insegura: {output_path}{Colors.RESET}")
+        print(f"{Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{Colors.RESET}")
+        return False
 
     if output_path == "/storage/emulated/0/Download" or output_path == "/data/data/com.termux/files/home/downloads":
         base_output_dir = output_path
     else:
         base_output_dir = os.path.join(output_path, platform, "video")
 
-    create_directories(base_output_dir)
+    # Validate and create directories safely
+    if not create_directories(base_output_dir):
+        print(f"{Colors.RED}ERROR: No se pudieron crear los directorios: {base_output_dir}{Colors.RESET}")
+        return False
 
     # --- 1. Detección y verificación de FFmpeg ---
     ffmpeg_dir = ffmpeg_utils.get_ffmpeg_path()
@@ -183,15 +231,24 @@ def download_video(
         # Fallback: intentar obtener el último segmento de la URL
         video_id_pattern = url.split("/")[-1].split("?")[0]
 
+    # Wait a bit for file system to settle after yt-dlp completes
+    time.sleep(1)
+
     final_output_glob = os.path.join(base_output_dir, f"{video_id_pattern}*.mp4")
     final_merged_files = glob.glob(final_output_glob)
 
     actual_final_file = None
     if final_merged_files:
-        actual_final_file = final_merged_files[0]  # Tomar el primero que coincida
-        print(
-            f"{Colors.GREEN}[+] Archivo MP4 final encontrado: {actual_final_file}{Colors.RESET}"
-        )
+        # Wait for the file to be fully written to disk
+        first_file = final_merged_files[0]
+        if wait_for_file_creation(first_file):
+            actual_final_file = first_file  # Tomar el primero que coincida
+            print(
+                f"{Colors.GREEN}[+] Archivo MP4 final encontrado: {actual_final_file}{Colors.RESET}"
+            )
+        else:
+            print(
+                f"{Colors.YELLOW}ADVERTENCIA: El archivo encontrado no está completamente escrito: {first_file}{Colors.RESET}")
     else:
         print(
             f"{
