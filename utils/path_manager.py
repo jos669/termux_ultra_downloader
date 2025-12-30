@@ -37,6 +37,12 @@ def create_directories(path):
     try:
         os.makedirs(path, exist_ok=True)
         return True
+    except PermissionError:
+        print(
+            f"{Colors.RED}Error de permisos al crear el directorio '{path}'. "
+            f"Ejecuta 'termux-setup-storage' y otorga los permisos necesarios.{Colors.RESET}"
+        )
+        return False
     except OSError as e:
         print(
             f"{Colors.RED}Error al crear el directorio '{path}': {e}" f"{Colors.RESET}"

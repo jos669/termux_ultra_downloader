@@ -36,7 +36,8 @@ def get_output_path_from_user():
 
         # Check for path traversal attempts
         if '..' in new_path or new_path.startswith('../') or '/..' in new_path:
-            print("Ruta inválida: intento de navegación de directorios detectado. Usando la predeterminada.")
+            print(
+                "Ruta inválida: intento de navegación de directorios detectado. Usando la predeterminada.")
             return default_path
 
         # Normalize the path
@@ -220,38 +221,98 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # Setup command
-    setup_parser = subparsers.add_parser("setup", help="Verifica dependencias e " "instala carpetas.")
+    setup_parser = subparsers.add_parser(
+        "setup", help="Verifica dependencias e "
+        "instala carpetas.")
 
     # Video command
     video_parser = subparsers.add_parser("video", help="Descargar videos")
-    video_parser.add_argument("quality", choices=["best", "1080p", "720p", "480p"], help="Calidad del video")
+    video_parser.add_argument(
+        "quality",
+        choices=[
+            "best",
+            "1080p",
+            "720p",
+            "480p"],
+        help="Calidad del video")
     video_parser.add_argument("url", help="URL del video")
-    video_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
-    video_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+    video_parser.add_argument(
+        "--route",
+        dest="output_path",
+        default=get_default_path(),
+        help="Ruta de salida para la descarga")
+    video_parser.add_argument(
+        "--cookies",
+        dest="cookies_file",
+        help="Ruta al archivo de cookies")
 
     # Audio command
     audio_parser = subparsers.add_parser("audio", help="Descargar audio")
-    audio_parser.add_argument("format", choices=["mp3", "m4a", "flac", "wav"], help="Formato de audio")
-    audio_parser.add_argument("bitrate", choices=["best", "320", "192", "128"], help="Bitrate del audio")
+    audio_parser.add_argument(
+        "format",
+        choices=[
+            "mp3",
+            "m4a",
+            "flac",
+            "wav"],
+        help="Formato de audio")
+    audio_parser.add_argument(
+        "bitrate",
+        choices=[
+            "best",
+            "320",
+            "192",
+            "128"],
+        help="Bitrate del audio")
     audio_parser.add_argument("url", help="URL del video/audio")
-    audio_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
-    audio_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+    audio_parser.add_argument(
+        "--route",
+        dest="output_path",
+        default=get_default_path(),
+        help="Ruta de salida para la descarga")
+    audio_parser.add_argument(
+        "--cookies",
+        dest="cookies_file",
+        help="Ruta al archivo de cookies")
 
     # Playlist command
     playlist_parser = subparsers.add_parser("playlist", help="Descargar playlist")
-    playlist_parser.add_argument("media_type", choices=["video", "audio"], help="Tipo de media")
-    playlist_parser.add_argument("quality", help="Calidad del video o formato del audio")
+    playlist_parser.add_argument(
+        "media_type", choices=[
+            "video", "audio"], help="Tipo de media")
+    playlist_parser.add_argument(
+        "quality", help="Calidad del video o formato del audio")
     playlist_parser.add_argument("url", help="URL de la playlist")
-    playlist_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
-    playlist_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+    playlist_parser.add_argument(
+        "--route",
+        dest="output_path",
+        default=get_default_path(),
+        help="Ruta de salida para la descarga")
+    playlist_parser.add_argument(
+        "--cookies",
+        dest="cookies_file",
+        help="Ruta al archivo de cookies")
 
     # Batch command
     batch_parser = subparsers.add_parser("batch", help="Descarga masiva desde archivo")
-    batch_parser.add_argument("media_type", choices=["video", "audio"], help="Tipo de media")
-    batch_parser.add_argument("config_option", help="Calidad de video o formato de audio")
+    batch_parser.add_argument(
+        "media_type",
+        choices=[
+            "video",
+            "audio"],
+        help="Tipo de media")
+    batch_parser.add_argument("config_option",
+                              help="Calidad de video o formato de audio")
     batch_parser.add_argument("file_path", help="Ruta al archivo con URLs")
-    batch_parser.add_argument("--route", dest="output_path", default=get_default_path(), help="Ruta de salida para la descarga")
-    batch_parser.add_argument("--cookies", dest="cookies_file", help="Ruta al archivo de cookies")
+    batch_parser.add_argument(
+        "--route",
+        dest="output_path",
+        default=get_default_path(),
+        help="Ruta de salida para la descarga")
+    batch_parser.add_argument(
+        "--cookies",
+        dest="cookies_file",
+        help="Ruta al archivo de cookies")
 
     if len(sys.argv) == 1:
         check_dependencies()

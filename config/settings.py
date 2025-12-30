@@ -11,9 +11,20 @@ def get_default_downloads_path():
     # Primero intenta con la ruta de descargas estándar de Termux
     termux_storage = os.path.expanduser("~/storage/downloads")
     if os.path.exists(termux_storage):
-        return termux_storage
+        # Verificar si tenemos permisos de escritura en el directorio
+        if os.access(termux_storage, os.W_OK):
+            return termux_storage
+        else:
+            # Si no tenemos permisos de escritura, usar carpeta local
+            home_downloads = os.path.expanduser("~/downloads")
+            try:
+                os.makedirs(home_downloads, exist_ok=True)
+                return home_downloads
+            except (PermissionError, OSError):
+                # Si no se puede crear, usar el directorio actual
+                return os.getcwd()
 
-    # Si no existe, intenta crear una carpeta en el directorio home
+    # Si el directorio de storage no existe, intentar crear carpeta local
     home_downloads = os.path.expanduser("~/downloads")
     try:
         os.makedirs(home_downloads, exist_ok=True)

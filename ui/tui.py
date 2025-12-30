@@ -5,6 +5,7 @@ import subprocess
 import re
 
 from config import settings
+from config.config_manager import get_default_path
 from utils.colors import Colors
 from . import logos
 from .input_styles import get_random_input_style
@@ -126,7 +127,7 @@ def print_dashboard():
     print(f"  - yt-dlp: {yt_dlp_status}   |   ffmpeg: {ffmpeg_status}")
     print(
         f"  - Ruta de Descargas: "
-        f"{Colors.YELLOW}{settings.DOWNLOADS_BASE_DIR}{Colors.RESET}"
+        f"{Colors.YELLOW}{get_default_path()}{Colors.RESET}"
     )
     print_line("─", width)
 

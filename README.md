@@ -30,6 +30,23 @@ Sigue estos pasos para poner en marcha Termux Ultra Downloader en tu dispositivo
 - **Termux**: Instalado desde [F-Droid](https://f-droid.org/packages/com.termux/) (recomendado).
 - **Permisos de Almacenamiento**: Ejecuta `termux-setup-storage` en Termux y acepta los permisos.
 
+### 2. Configuración Importante para Termux
+Si estás usando esta herramienta en Termux, es posible que necesites configurar los permisos de almacenamiento para poder descargar archivos en las carpetas de tu dispositivo Android:
+
+1. Ejecuta el siguiente comando en Termux:
+   ```bash
+   termux-setup-storage
+   ```
+
+2. Otorga los permisos de almacenamiento cuando se soliciten.
+
+3. Reinicia Termux después de otorgar los permisos.
+
+También puedes usar el script de configuración incluido:
+```bash
+python scripts/setup_storage.py
+```
+
 ### 2. Descarga del Proyecto
 Para obtener el código fuente, clona este repositorio usando `git`:
 

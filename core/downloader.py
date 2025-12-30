@@ -23,7 +23,26 @@ def is_safe_path(base_path, target_path):
     base_path = os.path.normpath(base_path)
     target_path = os.path.normpath(target_path)
 
-    # Get the real paths to resolve any symbolic links
+    # Handle Termux-specific storage paths by checking prefixes
+    # In Termux, /data/data/com.termux/files/home/storage is often a symlink
+    # to external storage, which is a valid location for downloads
+    termux_home = os.path.expanduser("~")
+    termux_storage = os.path.join(termux_home, "storage")
+
+    # Check if target path is within user's home directory or storage
+    if (target_path.startswith(termux_home + os.sep) or
+        target_path == termux_home or
+        target_path.startswith(termux_storage + os.sep) or
+        target_path == termux_storage):
+        return True
+
+    # Special handling for Android external storage paths that Termux can access
+    # when permissions are granted
+    android_external_storage = "/storage/emulated/0"
+    if target_path.startswith(android_external_storage + os.sep) or target_path == android_external_storage:
+        return True
+
+    # For other cases, use the original real path validation
     try:
         base_real = os.path.realpath(base_path)
         target_real = os.path.realpath(target_path)
@@ -37,6 +56,7 @@ def is_safe_path(base_path, target_path):
     except ValueError:
         # Paths are on different drives (on Windows) or other error
         return False
+
 
 # --- Rutas de binarios (gestionadas con shutil.which para robustez en Termux) ---
 YT_DLP_PATH = shutil.which("yt-dlp")
@@ -89,10 +109,19 @@ def download_and_merge_video_audio(
     # Security validation: Check if output_path is safe to prevent directory traversal
     if not is_safe_path(os.path.expanduser("~"), output_path):
         print(f"{Colors.RED}ERROR: Ruta de salida insegura: {output_path}{Colors.RESET}")
-        print(f"{Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{Colors.RESET}")
+        print(
+            f"{
+                Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{
+                Colors.RESET}")
         return None
 
-    if not os.access(os.path.dirname(output_path) or output_path, os.W_OK):
+    # Verificar si la ruta es un directorio antes de comprobar permisos
+    if not os.path.isdir(output_path):
+        print(f"{Colors.RED}ERROR: La ruta de salida no es un directorio: {output_path}{Colors.RESET}")
+        print(f"{Colors.YELLOW}Por favor, asegúrate de que el directorio existe y es accesible.{Colors.RESET}")
+        return None
+
+    if not os.access(output_path, os.W_OK):
         print(f"{Colors.RED}ERROR: No se tienen permisos de escritura para la ruta: {output_path}{Colors.RESET}")
         print(f"{Colors.YELLOW}Por favor, ejecuta 'termux-setup-storage' en tu terminal, concede los permisos y reinicia Termux.{Colors.RESET}")
         return None
@@ -192,7 +221,18 @@ def run_yt_dlp(
     command.append(url)  # La URL siempre al final
 
     # Mostrar el comando que se va a ejecutar (para depuración y transparencia)
-    full_command_str = " ".join(command)
+    # Escapar caracteres especiales para que sea seguro copiar y pegar en shell
+    safe_command_parts = []
+    for part in command:
+        # Si el argumento contiene caracteres especiales de shell, lo escapamos
+        if any(c in part for c in ['%', '*', '?', '[', ']', '$', '`', '"', '\\', '!', '~']):
+            # Usar comillas simples para escapar, reemplazando cualquier apóstrofo interno
+            escaped_part = "'" + part.replace("'", "'\"'\"'") + "'"
+            safe_command_parts.append(escaped_part)
+        else:
+            safe_command_parts.append(part)
+
+    full_command_str = " ".join(safe_command_parts)
     print(
         f"{Colors.CYAN}=================================================={Colors.RESET}"
     )

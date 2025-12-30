@@ -67,7 +67,10 @@ def download_video(
     from .downloader import is_safe_path
     if not is_safe_path(os.path.expanduser("~"), output_path):
         print(f"{Colors.RED}ERROR: Ruta de salida insegura: {output_path}{Colors.RESET}")
-        print(f"{Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{Colors.RESET}")
+        print(
+            f"{
+                Colors.YELLOW}La ruta de salida debe estar dentro del directorio de usuario para seguridad.{
+                Colors.RESET}")
         return False
 
     if output_path == "/storage/emulated/0/Download" or output_path == "/data/data/com.termux/files/home/downloads":
@@ -77,7 +80,8 @@ def download_video(
 
     # Validate and create directories safely
     if not create_directories(base_output_dir):
-        print(f"{Colors.RED}ERROR: No se pudieron crear los directorios: {base_output_dir}{Colors.RESET}")
+        print(
+            f"{Colors.RED}ERROR: No se pudieron crear los directorios: {base_output_dir}{Colors.RESET}")
         return False
 
     # --- 1. Detección y verificación de FFmpeg ---
@@ -248,7 +252,9 @@ def download_video(
             )
         else:
             print(
-                f"{Colors.YELLOW}ADVERTENCIA: El archivo encontrado no está completamente escrito: {first_file}{Colors.RESET}")
+                f"{
+                    Colors.YELLOW}ADVERTENCIA: El archivo encontrado no está completamente escrito: {first_file}{
+                    Colors.RESET}")
     else:
         print(
             f"{
